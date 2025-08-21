@@ -8,6 +8,13 @@ from datetime import datetime
 
 load_dotenv()
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+SAVE_DIR = os.path.join("backend", "outputs") 
+def _save_b64_png(b64: str, prefix: str) -> str:
+    fname = f"{prefix}_{datetime.now().strftime('%Y%m%d_%H%M%S_%f')}.png"
+    fpath = os.path.join(SAVE_DIR, fname)
+    with open(fpath, "wb") as f:
+        f.write(base64.b64decode(b64))
+    return fpath
 
 def image_gen(json_path: str) -> str:
     client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
@@ -30,40 +37,86 @@ def image_gen(json_path: str) -> str:
     else:
         print(f"Here is the prompt: {prompt}")
     print("Working on it.... wait some time")
-    result = client.images.generate(
-        model = "gpt-image-1",
-        prompt = prompt,
-        size = "1024x1024",
-        quality = "low"
-    )
-    print("Working on the second pic.... wait some time")
-    image_base64 = result.data[0].b64_json
-    image_bytes = base64.b64decode(image_base64)
 
-    save_dir = os.path.join("backend", "outputs")           
-    filename = f"pic_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"    
-    os.makedirs(save_dir, exist_ok=True)  # create if not exists
-    save_path = os.path.join(save_dir, filename)
-    with open(save_path, "wb") as f:
-        f.write(image_bytes)
+    content = f"""
+    Create a children's picture-book outline from this idea.
+Age target: 5. Maximum pages: 4.
 
-    print("Image saved to:", save_path)
+Return STRICT JSON with this schema:
+{{
+  "style": {{
+    "art_style": "short phrase (e.g., soft watercolor, thick outlines)",
+    "palette": "2–4 colors (e.g., soft pastels: peach, mint, sky blue)",
+    "composition_rules": "short list (e.g., centered main character, simple backgrounds)"
+  }},
+  "characters": [
+    {{
+      "name": "Character's name",
+      "visual": "distinctive visual description (colors, shapes, markings)",
+      "personality": "few friendly traits"
+    }}
+  ],
+  "pages": [
+    {{
+      "page_number": 1,
+      "narration": "1–2 short sentences for kids",
+      "illustration_prompt": "A FULLY SELF-CONTAINED prompt that restates the character and style without pronouns."
+    }}
+  ]
+}}
 
-    result2 = client.images.edit(
-        model = "gpt-image-1",
-        prompt = prompt,
-        image=open(save_path, "rb"),
-        size = "1024x1024",
-        quality = "low"
-    )
-    image2_base64 = result2.data[0].b64_json
-    image2_bytes = base64.b64decode(image2_base64)
-    filename2 = f"pic_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
-    save_path2 = os.path.join(save_dir, filename2)
-    with open(save_path2, "wb") as f:
-        f.write(image2_bytes)
-    print("Image 2 saved to:", save_path2)
-    return [save_path, save_path2]
+Rules:
+- Each page must be understandable in isolation.
+- In 'illustration_prompt', restate the main character's name and defining visual traits every time.
+- Do NOT embed text inside the image; narration is separate.
+- Stay cheerful and safe.
+Idea: {prompt}
+    """
+    SYSTEM = """You are a children's author & illustrator assistant.
+Return STRICT JSON only (no prose). Keep language gentle and age-appropriate.
+Never use pronouns like 'she/he/they' in illustration prompts; restate the character.
+"""
+    resp = client.chat.completions.create(
+    model="gpt-4o-mini",
+    response_format={"type": "json_object"},   # forces valid JSON
+    messages=[
+        {"role": "system", "content": SYSTEM},
+        {"role": "user", "content": content},
+    ],
+    )   
+    outline = json.loads(resp.choices[0].message.content)
+    style = outline.get("style") # getting style
+    characters = outline.get("characters") # getting characters
+
+    saves = []
+    pages = outline.get("pages")
+
+
+    for p in pages:
+        page_no = p.get("page_number")
+        illop = (p.get("illustration_prompt") or "").strip()
+        if not illop:
+            # fallback to narration if illustration prompt missing
+            illop = (p.get("narration") or "").strip()
+        if not illop:
+            continue
+
+        full_prompt = illop
+        gen = client.images.generate(
+            model="gpt-image-1",
+            prompt=full_prompt,
+            size="1024x1024"
+        )
+        path = _save_b64_png(gen.data[0].b64_json, f"page_{page_no:02d}")
+        saves.append({
+            "page_number": page_no,
+            "path": path,
+            "url": "/outputs/" + os.path.basename(path),
+            "narration": p.get("narration") or ""
+        })
+        print(f"Page {page_no} is done. Moving on!")
+    print("Done! bye.")
+    return saves
 
 
 if __name__ == "__main__":
