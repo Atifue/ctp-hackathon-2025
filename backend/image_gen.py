@@ -90,8 +90,8 @@ Never use pronouns like 'she/he/they' in illustration prompts; restate the chara
 
     saves = []
     pages = outline.get("pages")
-
-
+    print("Heres what chatgpt makes")
+    print(resp.choices[0].message.content)
     for p in pages:
         page_no = p.get("page_number")
         illop = (p.get("illustration_prompt") or "").strip()
@@ -101,11 +101,11 @@ Never use pronouns like 'she/he/they' in illustration prompts; restate the chara
         if not illop:
             continue
 
-        full_prompt = illop
+        full_prompt = "illustration = " + illop + "narration = " + p.get("narration")
         gen = client.images.generate(
             model="gpt-image-1",
             prompt=full_prompt,
-            size="1024x1024"
+            size="1024x1024",
             quality="low"
         )
         path = _save_b64_png(gen.data[0].b64_json, f"page_{page_no:02d}")
@@ -117,6 +117,10 @@ Never use pronouns like 'she/he/they' in illustration prompts; restate the chara
         })
         print(f"Page {page_no} is done. Moving on!")
     print("Done! bye.")
+    print("Done! bye.")
+    print("Done! bye.")
+    print("Done! bye.")
+    print("Heres the json btw")
     return saves
 
 
