@@ -39,7 +39,8 @@ def image_gen(json_path: str) -> str:
     print("Working on it.... wait some time")
 
     content = f"""
-    Create a children's picture-book outline from this idea.
+    Create children's picture-book illustrations for this idea.
+    focus ONLY on the visuals, do NOT include any text, any narration, any speech bubbles, or any labels or anything resembling writing in the images.
 Age target: 5. Maximum pages: 4.
 
 Return STRICT JSON with this schema:
@@ -67,16 +68,17 @@ Return STRICT JSON with this schema:
 
 Rules:
 - Each page must be understandable in isolation.
+- NEVER include any words in the images please.
 - There should be no text in the images, do not generate text in the images.
 - In 'illustration_prompt', restate the main character's name and defining visual traits every time.
 - Do NOT embed text inside the image; narration is separate.
 - Stay cheerful and safe.
 Idea: {prompt}
     """
-    SYSTEM = """You are a children's author & illustrator assistant.
+    SYSTEM = """You are a children's author & illustrator.
 Return STRICT JSON only (no prose). Keep language gentle and age-appropriate.
 Never use pronouns like 'she/he/they' in illustration prompts; restate the character. Never use text within
-the images. 
+the images please. 
 """
     resp = client.chat.completions.create(
     model="gpt-4o-mini",
@@ -94,16 +96,17 @@ the images.
     pages = outline.get("pages")
     print("Heres what chatgpt makes")
     print(resp.choices[0].message.content)
+
     for p in pages:
         page_no = p.get("page_number")
         illop = (p.get("illustration_prompt") or "").strip()
-        if not illop:
-            # fallback to narration if illustration prompt missing
-            illop = (p.get("narration") or "").strip()
+        # if not illop:
+        #     # fallback to narration if illustration prompt missing
+        #     illop = (p.get("narration") or "").strip()
         if not illop:
             continue
 
-        full_prompt = "illustration = " + illop + "narration = " + p.get("narration")
+        full_prompt = illop
         gen = client.images.generate(
             model="gpt-image-1",
             prompt=full_prompt,
@@ -114,10 +117,10 @@ the images.
         saves.append({
             "page_number": page_no,
             "path": path,
-            "url": "/outputs/" + os.path.basename(path),
-            "narration": p.get("narration") or ""
+            "url": "/outputs/" + os.path.basename(path)
         })
         print(f"Page {page_no} is done. Moving on!")
+
     print("Done! bye.")
     print("Done! bye.")
     print("Done! bye.")
