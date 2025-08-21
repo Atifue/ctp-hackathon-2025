@@ -323,6 +323,14 @@
                <button class="generate-button" id="generateButton" style="display: none;">Create My Story</button>
            </div>
        </div>
+
+       <div id="storySlider" style="display:none; margin-top: 20px; text-align:center;">
+        <button id="prevPage">◀</button>
+        <img id="sliderImage" src="" style="max-width:100%; border-radius:12px; margin:10px 0;" />
+        <p id="sliderCaption" style="color:#6b4423;"></p>
+        <button id="nextPage">▶</button>
+    </div>
+
    </div>
 
 
@@ -543,47 +551,70 @@
                }
            }
           
-           displayStory(result) {
-               console.log('Story created successfully!', result);
-              
-               this.loading.style.display = 'none';
-               this.statusText.textContent = 'Story created successfully!';
-              
-               // Create a simple preview
-               const preview = document.createElement('div');
-               preview.style.cssText = `
-                   margin-top: 20px;
-                   padding: 20px;
-                   background: #f9f9f9;
-                   border-radius: 12px;
-                   text-align: left;
-                   border: 1px solid #ddd;
-               `;
-              
-               preview.innerHTML = `
-                   <h3 style="color: #8b4513; margin-bottom: 15px;">Your Story Preview</h3>
-                   <p><strong>Transcript:</strong> "${result.transcript}"</p>
-                   <p><strong>Pages generated:</strong> ${result.pages.length}</p>
-                   <div style="margin-top: 15px;">
-                       ${result.pages.map((page, index) => `
-                           <div style="margin: 10px 0; padding: 10px; background: white; border-radius: 8px;">
-                               <strong>Page ${page.page_number}:</strong> ${page.narration}
-                               <br><small style="color: #666;">Image: ${page.url}</small>
-                           </div>
-                       `).join('')}
-                   </div>
-                   <button onclick="this.parentElement.remove(); storyRecorder.resetInterface();"
-                           style="margin-top: 15px; padding: 8px 16px; background: #8b4513; color: white; border: none; border-radius: 6px; cursor: pointer;">
-                       Create Another Story
-                   </button>
-               `;
-              
-               this.container = document.querySelector('.container');
-               this.container.appendChild(preview);
-              
-               // TODO: Replace this with flipbook component
-           }
-          
+                displayStory(result) {
+                    console.log('Story created successfully!', result);
+                    console.log('Full backend result:', result); // helpful for debugging
+                    
+                    this.loading.style.display = 'none';
+                    this.statusText.textContent = 'Story created successfully!';
+                    
+                    // Creates preview container
+                    const preview = document.createElement('div');
+                    preview.style.cssText = `
+                    margin-top: 20px;
+                    padding: 20px;
+                    background: #f9f9f9;
+                    border-radius: 12px;
+                    text-align: left;
+                    border: 1px solid #ddd;
+                    `;
+                    
+                preview.innerHTML = `
+                <h3 style="color: #8b4513; margin-bottom: 15px;">Your Story Preview</h3>
+                <p><strong>Transcript:</strong> "${result.transcript}"</p>
+                <p><strong>Pages generated:</strong> ${result.pages.length}</p>
+                <div style="margin-top: 15px;">
+                    ${result.pages.map((page) => `
+                        <div style="margin: 10px 0; padding: 10px; background: white; border-radius: 8px;">
+                            <strong>Page ${page.page_number}:</strong> ${page.narration || page.content || 'No text provided'}
+                            <br><small style="color: #666;">Image: ${page.url}</small>
+                            </div>
+                            `).join('')}
+                            </div>
+                            <button onclick="this.parentElement.remove(); storyRecorder.resetInterface();"
+                            style="margin-top: 15px; padding: 8px 16px; background: #8b4513; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                            Create Another Story
+                            </button>
+                            `;
+                        
+                        this.container = document.querySelector('.container');
+                        this.container.appendChild(preview);
+                        
+                        //flipbook/slider setup
+                        const slider = document.getElementById('storySlider');
+                        const sliderImage = document.getElementById('sliderImage');
+                        const sliderCaption = document.getElementById('sliderCaption');
+                        const prevButton = document.getElementById('prevPage');
+                        const nextButton = document.getElementById('nextPage');
+                        
+                        let currentPage = 0;
+                        const pages = result.pages;
+                        
+                        function showPage(index) {
+                            if (index < 0) index = pages.length - 1;
+                            if (index >= pages.length) index = 0;
+                            currentPage = index;
+                            sliderImage.src = `${BACKEND_URL}${pages[currentPage].url}`;
+                            sliderCaption.textContent = pages[currentPage].narration || pages[currentPage].content || 'No text provided';
+                        }
+                        
+                        showPage(0);
+                        slider.style.display = 'block';
+                        prevButton.onclick = () => showPage(currentPage - 1);
+                        nextButton.onclick = () => showPage(currentPage + 1);
+                    }
+
+            
            resetInterface() {
                this.recordButton.style.display = 'inline-block';
                this.recordButton.disabled = false;
