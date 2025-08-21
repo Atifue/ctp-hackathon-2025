@@ -36,7 +36,7 @@ def image_gen(json_path: str) -> str:
         size = "1024x1024",
         quality = "low"
     )
-
+    print("Working on the second pic.... wait some time")
     image_base64 = result.data[0].b64_json
     image_bytes = base64.b64decode(image_base64)
 
@@ -48,7 +48,22 @@ def image_gen(json_path: str) -> str:
         f.write(image_bytes)
 
     print("Image saved to:", save_path)
-    return save_path
+
+    result2 = client.images.edit(
+        model = "gpt-image-1",
+        prompt = prompt,
+        image=open(save_path, "rb"),
+        size = "1024x1024",
+        quality = "low"
+    )
+    image2_base64 = result2.data[0].b64_json
+    image2_bytes = base64.b64decode(image2_base64)
+    filename2 = f"pic_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
+    save_path2 = os.path.join(save_dir, filename2)
+    with open(save_path2, "wb") as f:
+        f.write(image2_bytes)
+    print("Image 2 saved to:", save_path2)
+    return [save_path, save_path2]
 
 
 if __name__ == "__main__":
