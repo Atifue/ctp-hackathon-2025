@@ -67,6 +67,7 @@ Return STRICT JSON with this schema:
 
 Rules:
 - Each page must be understandable in isolation.
+- There should be no text in the images, do not generate text in the images.
 - In 'illustration_prompt', restate the main character's name and defining visual traits every time.
 - Do NOT embed text inside the image; narration is separate.
 - Stay cheerful and safe.
@@ -74,7 +75,8 @@ Idea: {prompt}
     """
     SYSTEM = """You are a children's author & illustrator assistant.
 Return STRICT JSON only (no prose). Keep language gentle and age-appropriate.
-Never use pronouns like 'she/he/they' in illustration prompts; restate the character.
+Never use pronouns like 'she/he/they' in illustration prompts; restate the character. Never use text within
+the images. 
 """
     resp = client.chat.completions.create(
     model="gpt-4o-mini",
