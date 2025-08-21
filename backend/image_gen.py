@@ -106,6 +106,7 @@ Never use pronouns like 'she/he/they' in illustration prompts; restate the chara
             model="gpt-image-1",
             prompt=full_prompt,
             size="1024x1024"
+            quality="low"
         )
         path = _save_b64_png(gen.data[0].b64_json, f"page_{page_no:02d}")
         saves.append({
