@@ -61,7 +61,8 @@ Return STRICT JSON with this schema:
     {{
       "page_number": 1,
       "narration": "1–2 short sentences for kids",
-      "illustration_prompt": "A FULLY SELF-CONTAINED prompt that restates the character and style without pronouns."
+      "illustration_prompt": "A FULLY SELF-CONTAINED prompt that restates the character and style without pronouns.",
+      "url": "/outputs/page_01.png"
     }}
   ]
 }}
@@ -116,6 +117,8 @@ the images please.
         path = _save_b64_png(gen.data[0].b64_json, f"page_{page_no:02d}")
         saves.append({
             "page_number": page_no,
+            "narration": p.get("narration", "No text provided"),
+            "prompt": illop,
             "path": path,
             "url": "/outputs/" + os.path.basename(path)
         })
