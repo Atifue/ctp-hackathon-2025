@@ -1,28 +1,5 @@
 # ctp-hackathon-2025
 
-the option to record yourself <-- mp3 <-
-^ we need to call the whisper api --> return json text
-we send that json text to openai gpt model
-this sends it to the web app (front end)
-
-front end <--
-
-
-
-steps:
-0) basic front end with a button that lets you start and stop
-
-1) option to record yourself
-
-^^^^ later
-
-step 1) hardcode audio mp3 file to call whisper to return json text - subah
-
-step 2) json text into openai api model  (save whatever response) use 512x512  - atif (1024x1024 now since 512 isnt supported)
-
-step 3) send response to frontend to display <-- last step
-
-for later:
 
 ## Setup
 1. Upgrade pip  
@@ -36,6 +13,14 @@ for later:
 3. Install Python deps  
    `pip install -r requirements.txt`
 
-4. Run transcription  
-   `cd backend && python3 transcription.py`
+4. Run API  
+    python .\backend\app.py  or python 3 if ur on linux
+
+   note: you will probably need to use ur own api unless openai ever makes this free, we cannot support external api calls sooooo
+
+6. Visit the frontend at https://ctp-hackathon-2025.vercel.app/ or if running locally, open index.html
+
+   be sure to use your own api key.
+
+
 
